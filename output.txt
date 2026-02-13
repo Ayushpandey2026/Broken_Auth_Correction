@@ -1,0 +1,53 @@
+
+// [OTP] Session hgxs1k generated: 166439
+
+PS C:\Users\AYUSH PANDEY\Desktop\Debug_Broken\broken_auth_assignment> Invoke-RestMethod -Method POST `
+>>   -Uri http://localhost:3000/auth/login `
+>>   -ContentType "application/json" `
+>>   -Body (@{
+>>     email = "ayushpandey02003@gmail.com"
+>>     password = "password123"
+>>   } | ConvertTo-Json)
+
+message  loginSessionId
+-------  --------------
+OTP sent hgxs1k
+
+
+
+PS C:\Users\AYUSH PANDEY\Desktop\Debug_Broken\broken_auth_assignment>
+PS C:\Users\AYUSH PANDEY\Desktop\Debug_Broken\broken_auth_assignment> Invoke-RestMethod -Method POST `
+>>   -Uri http://localhost:3000/auth/verify-otp `
+>>   -ContentType "application/json" `
+>>   -Body (@{
+>>     loginSessionId = "hgxs1k"
+>>     otp = "166439"
+>>   } | ConvertTo-Json) `
+>>   -SessionVariable session
+
+message      sessionId
+-------      ---------
+OTP verified hgxs1k
+
+
+
+
+
+
+
+PS C:\Users\AYUSH PANDEY\Desktop\Debug_Broken\broken_auth_assignment> $tokenResponse = Invoke-RestMethod -Method POST `
+>>   -Uri http://localhost:3000/auth/token `
+>>   -WebSession $session
+PS C:\Users\AYUSH PANDEY\Desktop\Debug_Broken\broken_auth_assignment>
+PS C:\Users\AYUSH PANDEY\Desktop\Debug_Broken\broken_auth_assignment> $jwt = $tokenResponse.access_token
+PS C:\Users\AYUSH PANDEY\Desktop\Debug_Broken\broken_auth_assignment>
+PS C:\Users\AYUSH PANDEY\Desktop\Debug_Broken\broken_auth_assignment> Invoke-RestMethod -Method GET `
+>>   -Uri http://localhost:3000/protected `
+>>   -Headers @{
+>>     Authorization = "Bearer $jwt"
+>>   } | Format-List
+
+
+message      : Access granted
+user         : @{email=ayushpandey02003@gmail.com; sessionId=hgxs1k; iat=1770997807; exp=1770998707}
+success_flag : FLAG-YXl1c2hwYW5kZXkwMjAwM0BnbWFpbC5jb21fQ09NUExFVEVEX0FTU0lHTk1FTlQ=

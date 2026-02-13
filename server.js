@@ -15,9 +15,12 @@ const otpStore = {};
 // Middleware
 app.use(requestLogger);
 app.use(express.json());
+app.use(cookieParser()); // here added because it was imported but not used
+
 
 
 app.get("/", (req, res) => {
+  console.log("I am a middleware!");
   res.json({
     challenge: "Complete the Authentication Flow",
     instruction:
@@ -36,7 +39,7 @@ app.post("/auth/login", (req, res) => {
 
     // Generate session and OTP
     const loginSessionId = Math.random().toString(36).substring(7);
-    const otp = Math.floor(100000 + Math.random() * 900000); // 6-digit OTP
+    const otp = String(Math.floor(100000 + Math.random() * 900000)); // we used here string instead of math
 
     // Store session with 2-minute expiry
     loginSessions[loginSessionId] = {
@@ -49,7 +52,8 @@ app.post("/auth/login", (req, res) => {
     // Store OTP
     otpStore[loginSessionId] = otp;
 
-    console.log(`[OTP] Session ${loginSessionId} generated`);
+    console.log(`[OTP] Session ${loginSessionId} generated: ${otp}`);
+
 
     return res.status(200).json({
       message: "OTP sent",
@@ -83,9 +87,10 @@ app.post("/auth/verify-otp", (req, res) => {
       return res.status(401).json({ error: "Session expired" });
     }
 
-    if (parseInt(otp) !== otpStore[loginSessionId]) {
-      return res.status(401).json({ error: "Invalid OTP" });
-    }
+   if (otp !== otpStore[loginSessionId]) {
+  return res.status(401).json({ error: "Invalid OTP" });
+}
+
 
     res.cookie("session_token", loginSessionId, {
       httpOnly: true,
@@ -109,15 +114,16 @@ app.post("/auth/verify-otp", (req, res) => {
 
 app.post("/auth/token", (req, res) => {
   try {
-    const token = req.headers.authorization;
+      const sessionId = req.cookies.session_token;
 
-    if (!token) {
-      return res
-        .status(401)
-        .json({ error: "Unauthorized - valid session required" });
-    }
 
-    const session = loginSessions[token.replace("Bearer ", "")];
+   if (!sessionId) {
+  return res.status(401).json({ error: "Unauthorized - valid session required" });
+}
+
+
+    const session = loginSessions[sessionId];
+
 
     if (!session) {
       return res.status(401).json({ error: "Invalid session" });
@@ -129,7 +135,8 @@ app.post("/auth/token", (req, res) => {
     const accessToken = jwt.sign(
       {
         email: session.email,
-        sessionId: token,
+        sessionId: sessionId,
+
       },
       secret,
       {
@@ -161,3 +168,5 @@ app.get("/protected", authMiddleware, (req, res) => {
 app.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}`);
 });
+
+
